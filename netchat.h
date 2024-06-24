@@ -20,11 +20,19 @@ extern "C" {
 #endif
 
 typedef enum {
-  ERR_OK                = 0,
-  ERR_FAILED            = -1,
-  ERR_TIMEOUT           = -2,
-  ERR_AUTH              = -3,
-  ERR_SERVER_PROTECTED  = -4,
+  NETCHAT_OK                    = 0,
+  NETCHAT_FAILED                = -1,
+  NETCHAT_TIMEOUT               = -2,
+  NETCHAT_AUTH                  = -3,
+  NETCHAT_SERVER_PROTECTED      = -4,
+  NETCHAT_SERVER_OFFLINE        = -5,
+  NETCHAT_INVALID_ARG           = -6,
+  NETCHAT_INVALID_PASSWORD      = -7,
+  NETCHAT_NO_CONNECTION         = -8,
+  NETCHAT_INVALID_USERNAME      = -9,
+  NETCHAT_INVALID_CALC_KEY      = -10,
+  NETCHAT_INVALID_SESSION_TOKEN = -11,
+  NETCHAT_WORK_IN_PROGRESS      = -12,
 } netchat_enum_err_t;
 typedef s8_t netchat_err_t;
 
@@ -39,8 +47,8 @@ typedef struct {
 // Incoming message (for ex. when receiving a message)
 typedef struct {
     time_t timestamp;       // message timestamp (UNIX time)
-    char *recipient;        // message recipient (min. 3 chars, max. 18 chars)
     char *sender;           // message sender (min. 3 chars, max. 18 chars)
+    char *recipient;        // message recipient (min. 3 chars, max. 18 chars)
     char *message;          // message content
 } IncomingMessage;
 
@@ -50,31 +58,42 @@ typedef struct {
     char *message;          // message content
 } OutgoingMessage;
 
-typedef void (received_message_callback_t)(IncomingMessage message);
+typedef void (*received_message_callback_t)(IncomingMessage message);
 
 /*
  * Initialize the chat system
  * @param server server information
  * @param received_message_callback function to call when a message is received
 */
-err_t chat_init(struct netif *netif, ChatServer server, received_message_callback_t received_message_callback);
+netchat_err_t netchat_init(struct netif *netif, ChatServer server, received_message_callback_t received_message_callback);
+
+/*
+ * Login to the chat server
+*/
+netchat_err_t netchat_login(char *username, char *session_token);
 
 /*
  * Send a message
  * @param message message to send
 */
-netchat_err_t chat_send(OutgoingMessage *message);
+netchat_err_t netchat_send(OutgoingMessage *message);
 
 /*
  * Destroy the chat system
 */
-void chat_destroy();
+netchat_err_t netchat_destroy();
 
 /*
  * Check if the chat system is connected
  * @return true if connected, false otherwise
 */
-bool chat_is_connected();
+bool netchat_is_connected();
+
+/*
+ * Check if the chat system is logged in
+ * @return true if logged in, false otherwise
+*/
+bool netchat_is_logged_in();
 
 #ifdef __cplusplus
 }
