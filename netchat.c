@@ -59,12 +59,12 @@ netchat_err_t handle_received_tcp_data(char *data)
         return NETCHAT_INVALID_ARG;
     }
 
-    if (strcmp(data, "AUTH_SUCCESS\n") == 0) {
+    if (strncmp(data, "AUTH_SUCCESS", strlen("AUTH_SUCCESS")) == 0) {
         logged_in = true;
         return NETCHAT_OK;
     }
 
-    if (strcmp(data, "ALREADY_AUTHENTICATED\n") == 0) {
+    if (strncmp(data, "ALREADY_AUTHENTICATED", strlen("ALREADY_AUTHENTICATED")) == 0) {
         return NETCHAT_OK;
     }
 
