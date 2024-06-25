@@ -198,8 +198,13 @@ netchat_err_t netchat_send(OutgoingMessage *message)
 
 netchat_err_t netchat_destroy()
 {
-    return NETCHAT_WORK_IN_PROGRESS;
+    if (netchat_tcp_pcb != NULL)
+    {
+        altcp_close(netchat_tcp_pcb);
+        netchat_tcp_pcb = NULL;
+    }
     tcp_connected = false;
+    return NETCHAT_OK;
 }
 
 bool netchat_is_connected()
