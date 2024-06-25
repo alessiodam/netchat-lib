@@ -60,13 +60,11 @@ netchat_err_t handle_received_tcp_data(char *data)
     }
 
     if (strcmp(data, "AUTH_SUCCESS\n") == 0) {
-        printf("[netchat-lib] logged in successfully\n");
         logged_in = true;
         return NETCHAT_OK;
     }
 
     if (strcmp(data, "ALREADY_AUTHENTICATED\n") == 0) {
-        printf("[netchat-lib] already logged in\n");
         return NETCHAT_OK;
     }
 
@@ -86,7 +84,6 @@ netchat_err_t handle_received_tcp_data(char *data)
         };
 
         if (received_message_callback != NULL) {
-            printf("[netchat-lib] triggering callback\n");
             received_message_callback(incoming);
         }
     }
@@ -119,15 +116,12 @@ err_t tcp_recv_callback(void *arg, struct altcp_pcb *tpcb, struct pbuf *p, err_t
 
 err_t tcp_connect_callback(void *arg, struct altcp_pcb *tpcb, err_t err)
 {
-    printf("[netchat-lib] tcp_connect_callback\n");
     LWIP_UNUSED_ARG(arg);
     if (err == ERR_OK)
     {
-        printf("[netchat-lib] Connected to NETCHAT server!\n");
         altcp_err(tpcb, tcp_error_callback);
         altcp_recv(tpcb, tcp_recv_callback);
         tcp_connected = true;
-        printf("[netchat-lib] Connect phase ended\n");
     }
     else
     {
@@ -140,13 +134,11 @@ err_t tcp_connect_callback(void *arg, struct altcp_pcb *tpcb, err_t err)
 
 netchat_err_t netchat_init(struct netif *netif, ChatServer server, received_message_callback_t rcv_msg_callback)
 {
-    printf("[netchat-lib] netchat_init\n");
     chatif = netif;
     tcp_connected = false;
 
     if (!ipaddr_aton(server.host, &remote_ip))
     {
-        printf("[netchat-lib] invalid IP address\n");
         return NETCHAT_INVALID_ARG;
     }
 
@@ -154,10 +146,7 @@ netchat_err_t netchat_init(struct netif *netif, ChatServer server, received_mess
     err_t err = altcp_connect(netchat_tcp_pcb, &remote_ip, server.port, tcp_connect_callback);
     if (err != ERR_OK)
     {
-        printf("[netchat-lib] tcp connect err\n");
         return err;
-    } else {
-        printf("[netchat-lib] tcp connect ok\n");
     }
     received_message_callback = rcv_msg_callback;
     return ERR_OK;
@@ -165,13 +154,10 @@ netchat_err_t netchat_init(struct netif *netif, ChatServer server, received_mess
 
 netchat_err_t netchat_login(char *username, char *session_token)
 {
-    printf("[netchat-lib] netchat_login\n");
     if (strlen(username) < 3 || strlen(username) > 18) {
-        printf("[netchat-lib] Invalid username\n");
         return NETCHAT_INVALID_USERNAME;
     }
     if (strlen(session_token) != 256) {
-        printf("[netchat-lib] Invalid session token\n");
         return NETCHAT_INVALID_SESSION_TOKEN;
     }
 
@@ -179,8 +165,7 @@ netchat_err_t netchat_login(char *username, char *session_token)
     char *connect_str = (char *)malloc(len);
 
     if (connect_str == NULL) {
-        printf("[netchat-lib] malloc failed\n");
-        return -1;
+        return NETCHAT_FAILED;
     }
 
     snprintf(connect_str, len, "AUTH:%s:%s\n", username, session_token);
@@ -191,22 +176,18 @@ netchat_err_t netchat_login(char *username, char *session_token)
 
 netchat_err_t netchat_send(OutgoingMessage *message)
 {
-    printf("[netchat-lib] netchat_send\n");
-    return NETCHAT_WORK_IN_PROGRESS;
     if (!tcp_connected || chatif == NULL || netchat_tcp_pcb == NULL || !logged_in) {
         return NETCHAT_FAILED;
     }
     if (strlen(message->recipient) < 3 || strlen(message->recipient) > 18) {
-        printf("[netchat-lib] Invalid username\n");
         return NETCHAT_INVALID_USERNAME;
     }
-    
+
     size_t len = strlen(message->recipient) + strlen(":") + strlen(message->message) + strlen("\n") + 1;
     char *send_str = (char *)malloc(len);
 
     if (send_str == NULL) {
-        printf("[netchat-lib] malloc failed\n");
-        return -1;
+        return NETCHAT_FAILED;
     }
 
     snprintf(send_str, len, "%s:%s\n", message->recipient, message->message);
@@ -217,7 +198,6 @@ netchat_err_t netchat_send(OutgoingMessage *message)
 
 netchat_err_t netchat_destroy()
 {
-    printf("[netchat-lib] netchat_destroy\n");
     return NETCHAT_WORK_IN_PROGRESS;
     tcp_connected = false;
 }
